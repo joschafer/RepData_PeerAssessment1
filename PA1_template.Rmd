@@ -11,7 +11,7 @@ This analysis looks at the weekend versus weekday activity of an individual as m
 ## Loading and preprocessing the data
 This data was collected from a personal activity monitoring device worn by an anonymous individual collected at 5 minute intervals through out the day. The data consists of two months of data during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
 
-The [https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip](data) was loaded from the course data as provided by R. Peng.
+The data was loaded from the [course data](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip) as provided by R. Peng.
 
 ### Load the data
 The data was expanded from its original zip format from the operating system and then examined with operating system tools.  It was found the be in CSV format with headers provided and it was read as is with headers.
@@ -92,7 +92,6 @@ sum(is.na(CleanedStepsData$steps))
 Comparing the data pre and post cleanup shows that the imputation can have a significant effect on the results.  In this case, the post cleanup data show a more normal distribution.
 
 #### Histogram of the total number of steps taken each day
-
 ```{r}
 CleanedSumStepsByDay <- CleanedStepsData %>% group_by(date) %>% summarize(stepsSum = sum(steps, na.rm=TRUE))
 hist(CleanedSumStepsByDay$stepsSum,xlab="Steps per day", main="Histogram of steps per day (clean)")
@@ -106,28 +105,20 @@ median(CleanedSumStepsByDay$stepsSum)
 
 ```
 
-## Are there differences in activity patterns between weekdays and weekends?
-
--- For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.
-
--- Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
+## Differences in activity patterns between weekdays and weekends?
+In comparing the weekend to weekday data, there are very different patterns of activity for this individual during the period of the data.
 ```{r}
-
 is.weekend <- function (x) as.factor(ifelse(weekdays(x) %in% c("Saturday", "Sunday"), "Weekend", "Weekday"))
 CleanedStepsData <- mutate (CleanedStepsData, weekend = is.weekend(as.Date(date)))
 CleanedSumStepsByDay <- mutate (CleanedSumStepsByDay, weekend = is.weekend(as.Date(date)))
 ```
 
-
--- Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
+#### Panel plot showing a time series of the 5-minute interval versus the average number of steps taken over all weekday days and weekend days (y-axis). 
 ```{r}
-# TODO Clean up plots
 CleanedSumStepsForWeekendBy5Min <- filter(CleanedStepsData, weekend == "Weekend") %>% group_by(weekend, interval) %>% summarize(stepsSum = sum(steps, na.rm=TRUE), stepsMean = mean(steps, na.rm=TRUE))
 CleanedSumStepsForWeekdayBy5Min <- filter(CleanedStepsData, weekend == "Weekday") %>% group_by(weekend, interval) %>% summarize(stepsSum = sum(steps, na.rm=TRUE), stepsMean = mean(steps, na.rm=TRUE))
 par(mfrow = c(2,1))
-plot(x = CleanedSumStepsForWeekendBy5Min$interval, y = CleanedSumStepsForWeekendBy5Min$stepsMean, type='l')
-plot(x = CleanedSumStepsForWeekdayBy5Min$interval, y = CleanedSumStepsForWeekdayBy5Min$stepsMean, type='l')
-
+plot(x = CleanedSumStepsForWeekendBy5Min$interval, y = CleanedSumStepsForWeekendBy5Min$stepsMean, type='l', main="Weekend", ylab="Steps", xlab="")
+plot(x = CleanedSumStepsForWeekdayBy5Min$interval, y = CleanedSumStepsForWeekdayBy5Min$stepsMean, type='l', main="Weekday",ylab="Steps", xlab="Interval")
 
 ```
-

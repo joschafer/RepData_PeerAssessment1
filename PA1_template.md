@@ -6,7 +6,7 @@ This analysis looks at the weekend versus weekday activity of an individual as m
 ## Loading and preprocessing the data
 This data was collected from a personal activity monitoring device worn by an anonymous individual collected at 5 minute intervals through out the day. The data consists of two months of data during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
 
-The [https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip](data) was loaded from the course data as provided by R. Peng.
+The data was loaded from the [course data](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip) as provided by R. Peng.
 
 ### Load the data
 The data was expanded from its original zip format from the operating system and then examined with operating system tools.  It was found the be in CSV format with headers provided and it was read as is with headers.
@@ -62,16 +62,16 @@ sample_n(StepsData, 10)
 
 ```
 ##       steps       date interval
-## 400       0 2012-10-02      915
-## 7925    128 2012-10-28     1220
-## 5564      0 2012-10-20      735
-## 16460     0 2012-11-27      335
-## 4165      0 2012-10-15     1100
-## 2633      0 2012-10-10      320
-## 15496    31 2012-11-23     1915
-## 766      88 2012-10-03     1545
-## 12967     0 2012-11-15       30
-## 9723    392 2012-11-03     1810
+## 1121     35 2012-10-04     2120
+## 8968     NA 2012-11-01      315
+## 4124      0 2012-10-15      735
+## 12319   231 2012-11-12     1830
+## 744       0 2012-10-03     1355
+## 11706    NA 2012-11-10     1525
+## 2865      0 2012-10-10     2240
+## 15028     0 2012-11-22      415
+## 2598      0 2012-10-10       25
+## 2818     82 2012-10-10     1845
 ```
 
 ## Mean total number of steps taken per day?
@@ -165,13 +165,9 @@ sum(is.na(CleanedStepsData$steps))
 ## [1] 0
 ```
 ## Post cleanup data analysis
+Comparing the data pre and post cleanup shows that the imputation can have a significant effect on the results.  In this case, the post cleanup data show a more normal distribution.
 
-TODO Left off here
--- Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
-
-
-#### A histogram of the cleaned data.
-
+#### Histogram of the total number of steps taken each day
 
 ```r
 CleanedSumStepsByDay <- CleanedStepsData %>% group_by(date) %>% summarize(stepsSum = sum(steps, na.rm=TRUE))
@@ -199,11 +195,8 @@ median(CleanedSumStepsByDay$stepsSum)
 ## [1] 10766.19
 ```
 
-## Are there differences in activity patterns between weekdays and weekends?
-
--- For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.
-
--- Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
+## Differences in activity patterns between weekdays and weekends?
+In comparing the weekend to weekday data, there are very different patterns of activity for this individual during the period of the data.
 
 ```r
 is.weekend <- function (x) as.factor(ifelse(weekdays(x) %in% c("Saturday", "Sunday"), "Weekend", "Weekday"))
@@ -211,17 +204,14 @@ CleanedStepsData <- mutate (CleanedStepsData, weekend = is.weekend(as.Date(date)
 CleanedSumStepsByDay <- mutate (CleanedSumStepsByDay, weekend = is.weekend(as.Date(date)))
 ```
 
-
--- Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
+#### Panel plot showing a time series of the 5-minute interval versus the average number of steps taken over all weekday days and weekend days (y-axis). 
 
 ```r
-# TODO Clean up plots
 CleanedSumStepsForWeekendBy5Min <- filter(CleanedStepsData, weekend == "Weekend") %>% group_by(weekend, interval) %>% summarize(stepsSum = sum(steps, na.rm=TRUE), stepsMean = mean(steps, na.rm=TRUE))
 CleanedSumStepsForWeekdayBy5Min <- filter(CleanedStepsData, weekend == "Weekday") %>% group_by(weekend, interval) %>% summarize(stepsSum = sum(steps, na.rm=TRUE), stepsMean = mean(steps, na.rm=TRUE))
 par(mfrow = c(2,1))
-plot(x = CleanedSumStepsForWeekendBy5Min$interval, y = CleanedSumStepsForWeekendBy5Min$stepsMean, type='l')
-plot(x = CleanedSumStepsForWeekdayBy5Min$interval, y = CleanedSumStepsForWeekdayBy5Min$stepsMean, type='l')
+plot(x = CleanedSumStepsForWeekendBy5Min$interval, y = CleanedSumStepsForWeekendBy5Min$stepsMean, type='l', main="Weekend", ylab="Steps", xlab="")
+plot(x = CleanedSumStepsForWeekdayBy5Min$interval, y = CleanedSumStepsForWeekdayBy5Min$stepsMean, type='l', main="Weekday",ylab="Steps", xlab="Interval")
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-11-1.png) 
-
