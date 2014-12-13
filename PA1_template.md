@@ -1,21 +1,23 @@
 # Reproducible Research: Peer Assessment 1
 
 ## Synopsis
-TODO - What does this analysis represent?  
-
+This analysis looks at the weekend versus weekday activity of an individual as measured in steps over time. From the data I found that the weekend and weekday activity is different for this individual with both different daily patterns and different overall activity levels.
 
 ## Loading and preprocessing the data
-TODO - Describe where the data comes from and give attribution
+This data was collected from a personal activity monitoring device worn by an anonymous individual collected at 5 minute intervals through out the day. The data consists of two months of data during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
+
+The [https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip](data) was loaded from the course data as provided by R. Peng.
 
 ### Load the data
-TODO Describe the loading and first look at the data
+The data was expanded from its original zip format from the operating system and then examined with operating system tools.  It was found the be in CSV format with headers provided and it was read as is with headers.
+
 
 ```r
 # Load supporting library and read in data
 library(dplyr, warn.conflicts=FALSE)
 StepsData <- read.csv("Data/activity.csv")
 ```
-TODO Summary and first look at data.
+Overall the 17,568 observations were read with some NA data in the steps variable.
 
 
 ```r
@@ -60,34 +62,35 @@ sample_n(StepsData, 10)
 
 ```
 ##       steps       date interval
-## 12484     0 2012-11-13      815
-## 4485      0 2012-10-16     1340
-## 10422     0 2012-11-06      425
-## 12797    NA 2012-11-14     1020
-## 721      97 2012-10-03     1200
-## 17139     0 2012-11-29     1210
-## 6483    376 2012-10-23     1210
-## 10491   238 2012-11-06     1010
-## 5266      0 2012-10-19      645
-## 17150     0 2012-11-29     1305
+## 400       0 2012-10-02      915
+## 7925    128 2012-10-28     1220
+## 5564      0 2012-10-20      735
+## 16460     0 2012-11-27      335
+## 4165      0 2012-10-15     1100
+## 2633      0 2012-10-10      320
+## 15496    31 2012-11-23     1915
+## 766      88 2012-10-03     1545
+## 12967     0 2012-11-15       30
+## 9723    392 2012-11-03     1810
 ```
 
-- Process/transform the data (if necessary) into a format suitable for your analysis
+## Mean total number of steps taken per day?
+The mean values are examined in 2 ways, a histogram of steps per day and the mean and median values of the overall data set.
 
-## What is mean total number of steps taken per day?
-- For this part of the assignment, you can ignore the missing values in the dataset.
+#### Histogram of the total number of steps taken each day
+A histogram of data with missing values skipped.
 
-#### Make a histogram of the total number of steps taken each day
 
 ```r
-# TODO Clean up plots
 RawSumStepsByDay <- StepsData %>% group_by(date) %>% summarize(stepsSum = sum(steps, na.rm=TRUE))
-hist(RawSumStepsByDay$stepsSum)
+hist(RawSumStepsByDay$stepsSum, xlab="Steps per day", main="Histogram of steps per day (dirty)")
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-3-1.png) 
 
-#### Calculate and report the mean and median total number of steps taken per day
+#### Mean and median total number of steps taken per day.
+The original data (wih missing values skipped) has a mean of 9354 and a median of 10395.
+
 
 ```r
 mean(RawSumStepsByDay$stepsSum)
@@ -107,66 +110,100 @@ median(RawSumStepsByDay$stepsSum)
 
 
 ## What is the average daily activity pattern?
-- Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
-- Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+A time series plot of the 5-minute interval (x-axis) versus the average number of steps taken, averaged across all days (y-axis).  THe most active time of the day occurs between the 0800 and 1000 time each day.  Specifically, it occurs at 0835 with a 5 minute average of 106 steps.
+
 
 ```r
-# TODO Clean up plots
 RawSumStepsBy5Min <- StepsData %>% group_by(interval) %>% summarize(stepsSum = sum(steps, na.rm=TRUE), stepsMean = mean(steps, na.rm=TRUE))
-plot(x = RawSumStepsBy5Min$interval, y = RawSumStepsBy5Min$stepsMean, type='l')
+as.integer(RawSumStepsBy5Min[which.max(RawSumStepsBy5Min$stepsMean),"interval"])
+```
+
+```
+## [1] 835
+```
+
+```r
+max(RawSumStepsBy5Min$stepsMean)
+```
+
+```
+## [1] 206.1698
+```
+
+```r
+plot(x = RawSumStepsBy5Min$interval, y = RawSumStepsBy5Min$stepsMean, type='l', xlab="Time (24 hour)", ylab="Steps for 5 minutes", main="Steps versus time over 24 hours")
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-5-1.png) 
 
-```r
-maxInterval <- c(which.max(RawSumStepsBy5Min$stepsMean), max(RawSumStepsBy5Min$stepsMean))
-```
-
-
 ## Imputing missing values
-- Note that there are a number of days/intervals where there are missing values (coded as NA). The presence of missing days may introduce bias into some calculations or summaries of the data.
+There are a number of days/intervals where there are missing values (coded as NA). The extent of the missing data was  examined and the missing data was populated using the average across the complete data set for the corresponding interval.
 
--- Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
+Overall, there are 2304 periods with missing data that will be being populated.
 
 ```r
-NaCount <- sum(is.na(StepsData$steps))
+# Count of missing steps data
+sum(is.na(StepsData$steps))
 ```
 
+```
+## [1] 2304
+```
 
--- Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
-Fill the NA values with the mean for the 5 minute interval across all days
-
--- Create a new dataset that is equal to the original dataset but with the missing data filled in.
+I created a cleaned data set by filling the NA values with the mean for the 5 minute interval across all days so that it could be compared with the original data.
 
 ```r
+# Create new data set
 find.stepsMean <- function (x) RawSumStepsBy5Min$stepsMean[match (x, RawSumStepsBy5Min$interval)]
 CleanedStepsData <- StepsData %>%
       mutate(steps = ifelse(is.na(steps), find.stepsMean(interval),steps))
-CleanedNaCount <- sum(is.na(CleanedStepsData$steps))
+# Verify all NAs populated
+sum(is.na(CleanedStepsData$steps))
 ```
 
-#### Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+```
+## [1] 0
+```
+## Post cleanup data analysis
 
+TODO Left off here
+-- Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+
+#### A histogram of the cleaned data.
 
 
 ```r
-# TODO Clean up plots
 CleanedSumStepsByDay <- CleanedStepsData %>% group_by(date) %>% summarize(stepsSum = sum(steps, na.rm=TRUE))
-hist(CleanedSumStepsByDay$stepsSum)
+hist(CleanedSumStepsByDay$stepsSum,xlab="Steps per day", main="Histogram of steps per day (clean)")
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-8-1.png) 
 
+#### Mean and median total number of steps taken per day.
+The cleaned data (wih missing values replaced) has both a mean of 10766 and a median of 10766.
+
 ```r
-CleanedMeanStepsByDay <- mean(CleanedSumStepsByDay$stepsSum)
-CleanedMedianStepsByDay <- median(CleanedSumStepsByDay$stepsSum)
+mean(CleanedSumStepsByDay$stepsSum)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
+median(CleanedSumStepsByDay$stepsSum)
+```
+
+```
+## [1] 10766.19
 ```
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
-### For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.
+-- For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.
 
-##### Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
+-- Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
 
 ```r
 is.weekend <- function (x) as.factor(ifelse(weekdays(x) %in% c("Saturday", "Sunday"), "Weekend", "Weekday"))
@@ -175,7 +212,7 @@ CleanedSumStepsByDay <- mutate (CleanedSumStepsByDay, weekend = is.weekend(as.Da
 ```
 
 
-#### Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
+-- Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.
 
 ```r
 # TODO Clean up plots
@@ -186,5 +223,5 @@ plot(x = CleanedSumStepsForWeekendBy5Min$interval, y = CleanedSumStepsForWeekend
 plot(x = CleanedSumStepsForWeekdayBy5Min$interval, y = CleanedSumStepsForWeekdayBy5Min$stepsMean, type='l')
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-10-1.png) 
+![](PA1_template_files/figure-html/unnamed-chunk-11-1.png) 
 
